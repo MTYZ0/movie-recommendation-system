@@ -1,0 +1,11 @@
+# Java build outputs
+/out/
+*.class
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Reproducible delivery archive
+/proje2_teslim.zip
