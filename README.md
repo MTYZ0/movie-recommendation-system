@@ -9,7 +9,7 @@ Projede en benzer kullanıcıları ve en yüksek puanlı filmleri verimli şekil
 ## 🚀 Öne Çıkan Özellikler
 
 - **Çift Modlu Kullanıcı Arayüzü (Java Swing):**
-  - 🖥️ **Ekran A (Hedef Kullanıcı Modu):** `target_user.csv` dosyasından seçilen hazır bir kullanıcının geçmiş puanlamalarına göre öneri alma.
+  - 🖥️ **Ekran A (Hedef Kullanıcı Modu):** `data/target_user.csv` dosyasından seçilen hazır bir kullanıcının geçmiş puanlamalarına göre öneri alma.
   - ✍️ **Ekran B (Özel Puanlama Modu):** Sistemdeki filmlerden rastgele seçilen 5 filmi 1-5 arası puanlayarak anlık yeni bir kullanıcı profili oluşturma ve buna göre öneri alma.
 - **Yüksek Performans & Asenkron Hesaplama:**
   - Öneri hesaplamaları Java Swing'in `Event Dispatch Thread` (EDT) üzerinde değil, arka planda çalışan bir `SwingWorker` ile asenkron gerçekleştirilir. Bu sayede büyük veri setlerinde dahi arayüz kilitlenmez.
@@ -42,21 +42,24 @@ Proje, gereksiz karmaşıklıktan uzak, sade ve anlaşılır bir klasör hiyerar
 ```text
 movie-recommendation-system/
 ├── src/
-│   ├── Main.java                      # Uygulama Giriş Noktası
-│   ├── CsvReader.java                 # CSV Okuma ve Veri Ayrıştırma
-│   ├── Movie.java                     # Film Nesne Modeli
-│   ├── UserRatings.java               # Kullanıcı Puanları ve Seyrek Vektör Sınıfı
-│   ├── MovieScore.java                # Film ve Puan İkilisini Tutan Model
-│   ├── SimilarUser.java               # Benzerlik Skoru Tutan Kullanıcı Modeli
-│   ├── NodeMaxHeap.java               # Düğüm Tabanlı Özel Max-Heap Sınıfı
-│   ├── Recommendation.java            # Öneri Çıktı Modeli
-│   ├── RecommendationEngine.java      # Benzerlik ve Öneri Hesaplama Motoru
-│   └── MovieRecommendationGUI.java    # Swing Arayüz Tasarımı ve İşleyişi
-├── main_data.csv                      # Ana Kullanıcı Puanlama Verisi
-├── movies.csv                         # Film İsim ve Tür Bilgileri
-├── target_user.csv                    # Öneri Üretilecek Hedef Kullanıcılar
-├── RAPOR.md                           # Detaylı Akademik Rapor
-└── movie-recommendation-system.jar    # Çalıştırılabilir Uygulama Paketi
+│   ├── Main.java
+│   ├── CsvReader.java
+│   ├── Movie.java
+│   ├── MovieRecommendationGUI.java
+│   ├── MovieScore.java
+│   ├── NodeMaxHeap.java
+│   ├── Recommendation.java
+│   ├── RecommendationEngine.java
+│   ├── SimilarUser.java
+│   └── UserRatings.java
+├── data/
+│   ├── main_data.csv
+│   ├── movies.csv
+│   └── target_user.csv
+├── RAPOR.md
+├── README.md
+├── movie-recommendation-system.jar
+└── .gitignore
 ```
 
 ---
@@ -154,7 +157,7 @@ java -jar movie-recommendation-system.jar
 ```
 
 ### 4. Özel Veri Klasörü Parametreleri
-Sistem, CSV dosyalarını varsayılan olarak bulunduğunuz klasörde arar. Dilerseniz klasör yolunu veya dosya yollarını parametre olarak verebilirsiniz:
+Sistem, CSV dosyalarını varsayılan proje düzeninde `data/` klasöründe arar. Dilerseniz klasör yolunu veya dosya yollarını parametre olarak verebilirsiniz:
 ```sh
 # CSV dosyaları "data" klasörünün içindeyse:
 java -jar movie-recommendation-system.jar data
@@ -168,7 +171,7 @@ java -jar movie-recommendation-system.jar <main_data_path> <movies_path> <target
 ## ❓ Sorun Giderme ve Çözümler (FAQ)
 
 **S: "Dosya bulunamadı: main_data.csv" hatası alıyorum.**
-> **C:** CSV dosyalarınızın (`main_data.csv`, `movies.csv`, `target_user.csv`), JAR dosyasıyla veya terminali çalıştırdığınız dizinle aynı klasörde olduğundan emin olun. Alternatif olarak, klasör yolunu yukarıda açıklandığı gibi parametre olarak geçebilirsiniz.
+> **C:** CSV dosyalarınızın `data/` klasörü içinde bulunduğundan emin olun. Alternatif olarak, klasör yolunu yukarıda açıklandığı gibi parametre olarak geçebilirsiniz.
 
 **S: JAR dosyası açılmıyor veya çalıştırılamıyor.**
 > **C:** Sisteminizde Java Runtime Environment (JRE) kurulu olmayabilir veya sürümü eski olabilir. Terminale `java -version` yazarak sürümünüzün en az 8 (veya daha güncel) olduğunu doğrulayın.

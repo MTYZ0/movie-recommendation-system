@@ -4,8 +4,11 @@
 
 # IDE and OS files
 .DS_Store
+._*
+**/._*
 .idea/
 .vscode/
 
 # Reproducible delivery archive
 /proje2_teslim.zip
+/movie-recommendation-system.zip

@@ -180,11 +180,10 @@ JAR çalıştırma:
 java -jar movie-recommendation-system.jar
 ```
 
-CSV dosyaları çalışma klasöründe, JAR ile aynı klasörde veya `data/` klasörü
-içinde bulunabilir. Alternatif olarak tek argümanla veri klasörü verilebilir:
+CSV dosyaları proje düzeninde `data/` klasörü içinde bulunur. Program ayrıca çalışma klasörünü ve JAR dizinini de kontrol eder. Alternatif olarak tek argümanla veri klasörü verilebilir:
 
-Teslim ZIP'i içinde `movie-recommendation-system.jar`, `main_data.csv`,
-`movies.csv` ve `target_user.csv` aynı klasör seviyesinde tutulmuştur. CSV
+Teslim düzeninde `movie-recommendation-system.jar` kök dizinde, `main_data.csv`,
+`movies.csv` ve `target_user.csv` ise `data/` klasörü içinde tutulmuştur. CSV
 dosyaları JAR içine gömülmemiştir; program bu dosyaları dış dosya olarak
 bulacak şekilde tasarlanmıştır.
 
