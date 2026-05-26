@@ -1,5 +1,5 @@
 # Java build outputs
-/out/
+out/
 *.class
 
 # IDE and OS files
@@ -9,6 +9,6 @@
 .idea/
 .vscode/
 
-# Reproducible delivery archive
-/proje2_teslim.zip
-/movie-recommendation-system.zip
+# Delivery archives
+proje2_teslim.zip
+movie-recommendation-system.zip
