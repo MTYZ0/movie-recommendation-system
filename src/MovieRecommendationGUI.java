@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -29,13 +30,11 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 
 /**
  * Film öneri sisteminin Swing tabanlı kullanıcı arayüzüdür.
- *
- * Arayüz iki ana işlem ekranından oluşur:
- * 1. Hedef kullanıcıya göre öneri
- * 2. Kullanıcının seçtiği ve puanladığı filmlere göre öneri
+ * Modern koyu tema (slate/indigo) ve kart tabanlı liste tasarımı ile özelleştirilmiştir.
  */
 @SuppressWarnings("serial")
 public class MovieRecommendationGUI extends JFrame {
@@ -45,18 +44,34 @@ public class MovieRecommendationGUI extends JFrame {
     private static final int RANDOM_MOVIE_COUNT_PER_COMBO_BOX = 10;
     private static final int MANUAL_MOVIE_SELECTION_COUNT = 5;
 
+    // Arayüz Renk Paleti (Modern Slate & Royal Indigo)
+    private static final Color BG_DARK = new Color(15, 23, 42);       // Slate 900
+    private static final Color BG_CARD = new Color(30, 41, 59);       // Slate 800
+    private static final Color ACCENT = new Color(79, 70, 229);        // Indigo 600
+    private static final Color ACCENT_HOVER = new Color(67, 56, 202);  // Indigo 700
+    private static final Color TEXT_PRIMARY = new Color(248, 250, 252); // Slate 50
+    private static final Color TEXT_MUTED = new Color(148, 163, 184);   // Slate 400
+    private static final Color INPUT_BG = new Color(51, 65, 85);        // Slate 700
+    private static final Color BORDER_COLOR = new Color(51, 65, 85);    // Slate 700
+    private static final Color NEON_CYAN = new Color(6, 182, 212);      // Cyan 500
+
     private final RecommendationEngine recommendationEngine;
     private final JComboBox<UserRatings> targetUserComboBox;
     private final JTextField targetXField;
     private final JTextField targetKField;
-    private final DefaultListModel<String> targetResultModel;
+    private final DefaultListModel<Object> targetResultModel;
     private final List<JComboBox<Movie>> manualMovieComboBoxes;
     private final List<JTextField> manualRatingFields;
     private final JTextField manualXField;
     private final JTextField manualKField;
-    private final DefaultListModel<String> manualResultModel;
+    private final DefaultListModel<Object> manualResultModel;
 
     public static MovieRecommendationGUI create(RecommendationEngine recommendationEngine) {
+        // Sistem Look & Feel'ini ayarla
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
         MovieRecommendationGUI gui = new MovieRecommendationGUI(recommendationEngine);
         gui.configureFrame();
         gui.loadTargetUsers();
@@ -69,27 +84,32 @@ public class MovieRecommendationGUI extends JFrame {
         this.targetUserComboBox = new JComboBox<UserRatings>();
         this.targetXField = createSmallNumberField(DEFAULT_SIMILAR_USER_COUNT);
         this.targetKField = createSmallNumberField(DEFAULT_MOVIE_COUNT_PER_USER);
-        this.targetResultModel = new DefaultListModel<String>();
+        this.targetResultModel = new DefaultListModel<Object>();
         this.manualMovieComboBoxes = new ArrayList<JComboBox<Movie>>();
         this.manualRatingFields = new ArrayList<JTextField>();
         this.manualXField = createSmallNumberField(DEFAULT_SIMILAR_USER_COUNT);
         this.manualKField = createSmallNumberField(DEFAULT_MOVIE_COUNT_PER_USER);
-        this.manualResultModel = new DefaultListModel<String>();
+        this.manualResultModel = new DefaultListModel<Object>();
     }
 
     private void configureFrame() {
-        setTitle("Yığın Tabanlı Film Öneri Sistemi");
+        setTitle("🎬 Heap Tabanlı İşbirlikçi Filtreleme Öneri Sistemi");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 680);
-        setMinimumSize(new Dimension(850, 560));
+        setSize(1000, 720);
+        setMinimumSize(new Dimension(880, 620));
         setLocationRelativeTo(null);
+        getContentPane().setBackground(BG_DARK);
         setLayout(new BorderLayout());
     }
 
     private JTabbedPane createTabbedPane() {
         JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.addTab("Hedef Kullanıcı", createTargetUserPanel());
-        tabbedPane.addTab("Film Puanlarına Göre", createManualMoviePanel());
+        tabbedPane.setBackground(BG_CARD);
+        tabbedPane.setForeground(TEXT_PRIMARY);
+        tabbedPane.setFont(new Font("SansSerif", Font.BOLD, 13));
+
+        tabbedPane.addTab("Hedef Kullanıcı (Ekran A)", createTargetUserPanel());
+        tabbedPane.addTab("Film Puanlarına Göre (Ekran B)", createManualMoviePanel());
         return tabbedPane;
     }
 
@@ -102,21 +122,35 @@ public class MovieRecommendationGUI extends JFrame {
 
     private JPanel createTargetControlPanel() {
         JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(BorderFactory.createTitledBorder("Ekran A - Hedef Kullanıcıya Göre Öneri"));
+        formPanel.setBackground(BG_CARD);
+        formPanel.setBorder(createStyledTitledBorder("Ekran A - Hedef Kullanıcı Analizi ve Öneri"));
 
         GridBagConstraints constraints = createGridBagConstraints();
-        addLabel(formPanel, "Hedef kullanıcı:", constraints, 0, 0);
 
-        targetUserComboBox.setPreferredSize(new Dimension(220, 28));
+        JLabel userLabel = new JLabel("Hedef kullanıcı:");
+        styleLabel(userLabel, false);
+        addComponent(formPanel, userLabel, constraints, 0, 0);
+
+        targetUserComboBox.setPreferredSize(new Dimension(240, 30));
+        styleComboBox(targetUserComboBox);
         addComponent(formPanel, targetUserComboBox, constraints, 1, 0);
 
-        addLabel(formPanel, "X (benzer kullanıcı):", constraints, 2, 0);
+        JLabel xLabel = new JLabel("X (benzer kullanıcı):");
+        styleLabel(xLabel, false);
+        addComponent(formPanel, xLabel, constraints, 2, 0);
+
+        styleTextField(targetXField);
         addComponent(formPanel, targetXField, constraints, 3, 0);
 
-        addLabel(formPanel, "K (film/kullanıcı):", constraints, 4, 0);
+        JLabel kLabel = new JLabel("K (film/kullanıcı):");
+        styleLabel(kLabel, false);
+        addComponent(formPanel, kLabel, constraints, 4, 0);
+
+        styleTextField(targetKField);
         addComponent(formPanel, targetKField, constraints, 5, 0);
 
-        JButton recommendationButton = new JButton("Get Recommendations");
+        JButton recommendationButton = new JButton("Öneri Al");
+        styleButton(recommendationButton, true);
         recommendationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
@@ -136,17 +170,30 @@ public class MovieRecommendationGUI extends JFrame {
     }
 
     private JPanel createManualInputPanel() {
-        JPanel wrapperPanel = new JPanel(new BorderLayout(8, 8));
-        wrapperPanel.setBorder(BorderFactory.createTitledBorder("Ekran B - Filmlere Göre Öneri"));
+        JPanel wrapperPanel = new JPanel(new BorderLayout(10, 10));
+        wrapperPanel.setBackground(BG_CARD);
+        wrapperPanel.setBorder(createStyledTitledBorder("Ekran B - Özel Film Puanlama Analizi"));
 
-        JPanel movieGrid = new JPanel(new GridLayout(MANUAL_MOVIE_SELECTION_COUNT, 5, 8, 8));
+        JPanel movieGrid = new JPanel(new GridLayout(MANUAL_MOVIE_SELECTION_COUNT, 5, 10, 8));
+        movieGrid.setBackground(BG_CARD);
 
         for (int index = 0; index < MANUAL_MOVIE_SELECTION_COUNT; index++) {
             JLabel movieLabel = new JLabel("Film " + (index + 1) + ":", SwingConstants.RIGHT);
+            styleLabel(movieLabel, false);
+
             JComboBox<Movie> movieComboBox = new JComboBox<Movie>();
+            styleComboBox(movieComboBox);
+            movieComboBox.setPreferredSize(new Dimension(280, 28));
+
             JLabel ratingLabel = new JLabel("Puan:", SwingConstants.RIGHT);
+            styleLabel(ratingLabel, false);
+
             JTextField ratingField = createSmallNumberField(5);
+            styleTextField(ratingField);
+
             JLabel ratingRangeLabel = new JLabel("[1-5]");
+            styleLabel(ratingRangeLabel, false);
+            ratingRangeLabel.setForeground(NEON_CYAN); // Siber açık mavi ipucu rengi
 
             manualMovieComboBoxes.add(movieComboBox);
             manualRatingFields.add(ratingField);
@@ -160,13 +207,25 @@ public class MovieRecommendationGUI extends JFrame {
 
         loadRandomMoviesToManualComboBoxes();
 
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
-        actionPanel.add(new JLabel("X (benzer kullanıcı):"));
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        actionPanel.setBackground(BG_CARD);
+
+        JLabel xLabel = new JLabel("X (benzer kullanıcı):");
+        styleLabel(xLabel, false);
+        actionPanel.add(xLabel);
+
+        styleTextField(manualXField);
         actionPanel.add(manualXField);
-        actionPanel.add(new JLabel("K (film/kullanıcı):"));
+
+        JLabel kLabel = new JLabel("K (film/kullanıcı):");
+        styleLabel(kLabel, false);
+        actionPanel.add(kLabel);
+
+        styleTextField(manualKField);
         actionPanel.add(manualKField);
 
         JButton refreshButton = new JButton("Filmleri Yenile");
+        styleButton(refreshButton, false);
         refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
@@ -174,7 +233,8 @@ public class MovieRecommendationGUI extends JFrame {
             }
         });
 
-        JButton recommendationButton = new JButton("Get Recommendations");
+        JButton recommendationButton = new JButton("Öneri Al");
+        styleButton(recommendationButton, true);
         recommendationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
@@ -190,20 +250,23 @@ public class MovieRecommendationGUI extends JFrame {
         return wrapperPanel;
     }
 
-    private JScrollPane createResultScrollPane(DefaultListModel<String> resultModel) {
-        JList<String> resultList = new JList<String>(resultModel);
-        resultList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+    private JScrollPane createResultScrollPane(DefaultListModel<Object> resultModel) {
+        JList<Object> resultList = new JList<Object>(resultModel);
+        resultList.setCellRenderer(new RecommendationCellRenderer());
         resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         resultList.setVisibleRowCount(18);
+        resultList.setBackground(BG_DARK);
 
         JScrollPane scrollPane = new JScrollPane(resultList);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Önerilen Filmler"));
+        scrollPane.setBorder(createStyledTitledBorder("Önerilen Filmler (Max-Heap ile Sıralı)"));
+        scrollPane.setBackground(BG_DARK);
         return scrollPane;
     }
 
     private JPanel createRootPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        panel.setBackground(BG_DARK);
         return panel;
     }
 
@@ -215,7 +278,7 @@ public class MovieRecommendationGUI extends JFrame {
 
     private GridBagConstraints createGridBagConstraints() {
         GridBagConstraints constraints = new GridBagConstraints();
-        constraints.insets = new Insets(4, 6, 4, 6);
+        constraints.insets = new Insets(6, 6, 6, 6);
         constraints.fill = GridBagConstraints.HORIZONTAL;
         return constraints;
     }
@@ -228,6 +291,7 @@ public class MovieRecommendationGUI extends JFrame {
             int gridY
     ) {
         JLabel label = new JLabel(text, SwingConstants.RIGHT);
+        styleLabel(label, false);
         addComponent(panel, label, constraints, gridX, gridY);
     }
 
@@ -241,6 +305,86 @@ public class MovieRecommendationGUI extends JFrame {
         constraints.gridx = gridX;
         constraints.gridy = gridY;
         panel.add(component, constraints);
+    }
+
+    // Arayüz Elemanı Özelleştirme Metotları
+    private void styleLabel(JLabel label, boolean isHeader) {
+        if (isHeader) {
+            label.setFont(new Font("SansSerif", Font.BOLD, 14));
+            label.setForeground(TEXT_PRIMARY);
+        } else {
+            label.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            label.setForeground(TEXT_MUTED);
+        }
+    }
+
+    private void styleTextField(JTextField textField) {
+        textField.setBackground(INPUT_BG);
+        textField.setForeground(TEXT_PRIMARY);
+        textField.setCaretColor(TEXT_PRIMARY);
+        textField.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        textField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(4, 8, 4, 8)
+        ));
+    }
+
+    private void styleComboBox(JComboBox<?> comboBox) {
+        comboBox.setBackground(INPUT_BG);
+        comboBox.setForeground(BG_DARK);
+        comboBox.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        comboBox.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+    }
+
+    private void styleButton(final JButton button, boolean isPrimary) {
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setOpaque(true);
+        button.setFont(new Font("SansSerif", Font.BOLD, 12));
+
+        if (isPrimary) {
+            button.setBackground(ACCENT);
+            button.setForeground(Color.WHITE);
+            button.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    button.setBackground(ACCENT_HOVER);
+                }
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    button.setBackground(ACCENT);
+                }
+            });
+        } else {
+            button.setBackground(new Color(51, 65, 85)); // Slate 700
+            button.setForeground(TEXT_PRIMARY);
+            button.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    button.setBackground(new Color(71, 85, 105)); // Slate 600
+                }
+                @Override
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    button.setBackground(new Color(51, 65, 85));
+                }
+            });
+        }
+        button.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
+    }
+
+    private javax.swing.border.Border createStyledTitledBorder(String title) {
+        return BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                title,
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                new Font("SansSerif", Font.BOLD, 12),
+                TEXT_MUTED
+            ),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        );
     }
 
     private void loadTargetUsers() {
@@ -364,7 +508,7 @@ public class MovieRecommendationGUI extends JFrame {
     }
 
     private void showRecommendations(
-            DefaultListModel<String> resultModel,
+            DefaultListModel<Object> resultModel,
             List<Recommendation> recommendations
     ) {
         resultModel.clear();
@@ -374,8 +518,8 @@ public class MovieRecommendationGUI extends JFrame {
             return;
         }
 
-        for (int index = 0; index < recommendations.size(); index++) {
-            resultModel.addElement((index + 1) + ". " + recommendations.get(index).toDisplayText());
+        for (Recommendation recommendation : recommendations) {
+            resultModel.addElement(recommendation);
         }
     }
 
@@ -384,7 +528,7 @@ public class MovieRecommendationGUI extends JFrame {
     }
 
     private void runRecommendationInBackground(
-            final DefaultListModel<String> resultModel,
+            final DefaultListModel<Object> resultModel,
             final RecommendationJob recommendationJob
     ) {
         resultModel.clear();
@@ -416,5 +560,110 @@ public class MovieRecommendationGUI extends JFrame {
 
     private interface RecommendationJob {
         List<Recommendation> run();
+    }
+
+    /**
+     * Önerileri visual bir liste kartı olarak çizen özel Cell Renderer.
+     */
+    private static class RecommendationCellRenderer extends JPanel implements javax.swing.ListCellRenderer<Object> {
+        private final JLabel rankLabel;
+        private final JLabel titleLabel;
+        private final JLabel infoLabel;
+        private final JLabel ratingLabel;
+
+        public RecommendationCellRenderer() {
+            setLayout(new BorderLayout(15, 6));
+            setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)
+            ));
+            setBackground(BG_CARD);
+
+            // Sıralama Numarası Badge'i
+            rankLabel = new JLabel();
+            rankLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+            rankLabel.setForeground(NEON_CYAN);
+            rankLabel.setPreferredSize(new Dimension(40, 40));
+            rankLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+            // Yazı Paneli (Başlık ve Alt Bilgi)
+            JPanel textPanel = new JPanel(new GridLayout(2, 1, 2, 2));
+            textPanel.setOpaque(false);
+
+            titleLabel = new JLabel();
+            titleLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
+            titleLabel.setForeground(TEXT_PRIMARY);
+
+            infoLabel = new JLabel();
+            infoLabel.setFont(new Font("SansSerif", Font.PLAIN, 11));
+            infoLabel.setForeground(TEXT_MUTED);
+
+            textPanel.add(titleLabel);
+            textPanel.add(infoLabel);
+
+            // Puan Göstergesi (Yıldızlar)
+            ratingLabel = new JLabel();
+            ratingLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+            ratingLabel.setForeground(new Color(245, 158, 11)); // Altın sarısı (Amber 500)
+            ratingLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+            add(rankLabel, BorderLayout.WEST);
+            add(textPanel, BorderLayout.CENTER);
+            add(ratingLabel, BorderLayout.EAST);
+        }
+
+        @Override
+        public java.awt.Component getListCellRendererComponent(
+                JList<?> list,
+                Object value,
+                int index,
+                boolean isSelected,
+                boolean cellHasFocus
+        ) {
+            if (value instanceof Recommendation) {
+                Recommendation rec = (Recommendation) value;
+
+                rankLabel.setText("#" + (index + 1));
+                rankLabel.setVisible(true);
+
+                titleLabel.setText(rec.getMovie().getTitle());
+
+                String similarityPct = String.format(java.util.Locale.US, "%.2f%%", rec.getSourceSimilarity() * 100.0);
+                infoLabel.setText("👤 Benzer Kullanıcı: " + UserRatings.resolveName(rec.getSourceUserId()) + "   •   🔗 Benzerlik: " + similarityPct);
+
+                // Yıldız şeklinde puan çizimi
+                StringBuilder stars = new StringBuilder();
+                for (int i = 0; i < rec.getRating(); i++) {
+                    stars.append("★");
+                }
+                for (int i = rec.getRating(); i < 5; i++) {
+                    stars.append("☆");
+                }
+                ratingLabel.setText(stars.toString() + " (" + rec.getRating() + "/5)");
+                ratingLabel.setVisible(true);
+
+                // Seçim rengi
+                if (isSelected) {
+                    setBackground(new Color(79, 70, 229, 65)); // Hafif saydam Indigo
+                } else {
+                    setBackground(BG_CARD);
+                }
+            } else {
+                // "Hesaplanıyor..." veya "Öneri bulunamadı..." gibi düz metinler için
+                rankLabel.setVisible(false);
+                ratingLabel.setVisible(false);
+                titleLabel.setText(value != null ? value.toString() : "");
+                titleLabel.setFont(new Font("SansSerif", Font.ITALIC, 12));
+                infoLabel.setText("");
+
+                if (isSelected) {
+                    setBackground(new Color(79, 70, 229, 45));
+                } else {
+                    setBackground(BG_CARD);
+                }
+            }
+
+            return this;
+        }
     }
 }

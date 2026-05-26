@@ -30,7 +30,47 @@ public class RecommendationEngine {
         this.mainUsers = new ArrayList<UserRatings>(mainUsers);
         this.targetUsers = new ArrayList<UserRatings>(targetUsers);
         this.moviesById = new HashMap<Integer, Movie>(moviesById);
-        this.allMovies = new ArrayList<Movie>(moviesById.values());
+        
+        // Ekran B'de "Öneri bulunamadı" hatasını önlemek ve öneri kalitesini/çeşitliliğini artırmak için:
+        // Yalnızca main_data.csv içinde aktif olarak puanlanmış (en az 3 kez puanlanmış) filmleri seçiyoruz.
+        // Böylece kullanıcının puanladığı filmler ile veri setindeki diğer kullanıcılar arasında mutlaka ortak puan bulunur.
+        Map<Integer, Integer> movieRatingCounts = new HashMap<Integer, Integer>();
+        for (UserRatings user : mainUsers) {
+            for (Integer movieId : user.getRatings().keySet()) {
+                Integer count = movieRatingCounts.get(movieId);
+                if (count == null) {
+                    movieRatingCounts.put(movieId, 1);
+                } else {
+                    movieRatingCounts.put(movieId, count + 1);
+                }
+            }
+        }
+        
+        List<Movie> activeMovies = new ArrayList<Movie>();
+        for (Movie movie : moviesById.values()) {
+            Integer count = movieRatingCounts.get(movie.getMovieId());
+            if (count != null && count >= 3) { // En az 3 kullanıcı tarafından puanlanmış popüler/aktif filmler
+                activeMovies.add(movie);
+            }
+        }
+        
+        // Eğer aktif film sayısı çok az ise eşiği düşürerek en az 1 puanlıları al
+        if (activeMovies.size() < 100) {
+            activeMovies.clear();
+            for (Movie movie : moviesById.values()) {
+                Integer count = movieRatingCounts.get(movie.getMovieId());
+                if (count != null && count >= 1) {
+                    activeMovies.add(movie);
+                }
+            }
+        }
+        
+        // Eğer veri seti boş ise güvenli geri dönüş (fallback) yap
+        if (activeMovies.isEmpty()) {
+            activeMovies.addAll(moviesById.values());
+        }
+        
+        this.allMovies = activeMovies;
         this.random = new Random();
     }
 

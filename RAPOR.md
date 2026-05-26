@@ -1,5 +1,36 @@
 # Yığın Tabanlı İşbirlikçi Filtreleme Film Öneri Sistemi
 
+## Proje ve Grup Bilgileri
+
+*   **Grup No:** 11
+*   **Grup Üyeleri:**
+    *   **Zeynep Taşkın** (Öğrenci No: 2560882001)
+    *   **Muhammed Tahir Yanmaz** (Öğrenci No: 2121221372)
+*   **Ders:** Veri Yapıları ve Algoritmalar (Data Structures) Proje #2
+*   **Tarih:** 26 Mayıs 2026
+
+## Görev Dağılımı
+
+Proje, grup çalışması ilkelerine uygun olarak iki ana bölüm halinde planlanmış ve ortaklaşa geliştirilmiştir:
+
+*   **Zeynep Taşkın (2560882001):**
+    *   **Dizi İçermeyen Node Tabanlı Max-Heap (`NodeMaxHeap.java`)** yapısının sıfırdan tasarlanması ve implementasyonu. Ağacın tam ikili ağaç (complete binary tree) özelliğinin korunması için bit düzeyinde (binary path) yön bulma algoritmalarının (`findParentNodeForPosition`, `findNodeAtPosition`) geliştirilmesi.
+    *   Arama (`search`) ve ekleme (`insert`) algoritmalarının yığın yapısı üzerinde optimize edilmesi.
+    *   **Gelişmiş Kullanıcı Arayüzü Tasarımı (`MovieRecommendationGUI.java`):** Slate & Royal Indigo renk paletiyle modern, koyu temalı Swing pencerelerinin tasarlanması, `SwingWorker` ile arka plan eşzamansız hesaplama yapısının kurulması, özelleştirilmiş `ListCellRenderer` (yıldızlı ve yüzde benzerlikli kartlar) geliştirilmesi ve macOS ComboBox metin okunabilirlik düzeltmesinin uygulanması.
+
+*   **Muhammed Tahir Yanmaz (2121221372):**
+    *   **Öneri ve Benzerlik Motoru (`RecommendationEngine.java`):** Seyrek matrisler üzerinden kosinüs benzerliği hesabı (`calculateCosineSimilarity`) formülasyonunun ve veri seyrekleşmesi çözümlerinin tasarlanması.
+    *   Matris verilerinin okunması ve pars edilmesi için tırnak içi virgül duyarlı özel **CSV Okuyucu (`CsvReader.java`)** yazılması.
+    *   Kullanıcı film puan vektörlerinin HashTable (`HashMap`) veri yapısı kullanılarak verimli bir şekilde tutulması (`UserRatings.java`). Kosinüs benzerliğinde kullanılan norm hesaplamalarının (`getVectorNorm`) squaredNorm önbellek yapısı ile O(1) sürede getirilmesinin sağlanması.
+    *   Ekran B'de veri seyrekleşmesinden (sparsity) kaynaklanan "Öneri bulunamadı" soğuk başlangıç probleminin çözülmesi için **Aktif Film Filtresi** geliştirilmesi (en az 3 kullanıcı tarafından puanlanmış aktif filmlerin rastgele listelenmesi).
+
+## Projenin Temel Detayları
+
+Bu proje, veri yapısı kısıtları ve modern yazılım mühendisliği pratikleri birleştirilerek tasarlanmıştır:
+1.  **Dizi Kullanılmayan Ağaç Tabanlı Yığın (Strict Custom Heap):** Klasik yığın (heap) yapıları performans için diziler (array) üzerinde indeks formülleriyle (`2*i + 1`, `2*i + 2`) tutulur. Ancak bu projede, ödevdeki katı kısıt doğrultusunda **hiçbir şekilde Java dizisi veya ArrayList kullanılmamıştır.** Heap, fiziksel olarak birbirine referansla bağlı ağaç düğümleriyle (`parent`, `left`, `right`) yönetilir. Yeni eklenecek veya çıkartılacak düğümün fiziksel konumu, düğüm sayısının ikili bit gösterimi (binary path) takip edilerek kökten aşağıya doğru $O(\log N)$ sürede bulunur.
+2.  **Verimli Seyrek Matris Yönetimi (Sparse Matrix & Norm Caching):** `main_data.csv` içindeki binlerce film ve kullanıcı hücresinin çoğu sıfırdır (seyrek matris). Belleği boşa harcamamak adına veriler iki boyutlu dizi yerine `HashMap` (HashTable) içinde saklanmıştır. Benzerlik hesaplamalarında hızı artırmak amacıyla, her kullanıcının vektör normu (`squaredNorm`) puan eklenirken hesaplanıp önbelleğe alınır; böylece benzerlik matrisi çıkarılırken norm hesabı $O(1)$ sürede tamamlanır.
+3.  **Modern Swing Arayüzü ve Thread Yönetimi (EDT Protection):** Arayüz, donma ve takılmaları önlemek adına Swing'in tek iş parçacığı (Event Dispatch Thread) kuralını korur. Öneri hesaplamaları arka planda `SwingWorker` ile çalıştırılarak GUI akıcılığı korunmuştur.
+
 ## Projenin Amacı
 
 Bu proje, kullanıcıların film puanları üzerinden kosinüs benzerliği hesaplayarak
@@ -163,3 +194,44 @@ java -jar movie-recommendation-system.jar data
 
 Üç argüman verilirse sırasıyla `main_data.csv`, `movies.csv`,
 `target_user.csv` yolları kabul edilir.
+
+## Örnek Program Çıktısı
+
+Aşağıda, öneri motorunun hem **Ekran A** hem de **Ekran B** için ürettiği gerçek konsol/algoritma çıktısı yer almaktadır. Bu çıktı, veri setindeki kosinüs benzerliği hesaplamalarına ve node tabanlı Max-Heap ağacı üzerinden en büyük elemanların çekilmesine dayanmaktadır.
+
+### 1. Ekran A (Hedef Kullanıcı Analizi) Çıktısı
+- **Seçilen Hedef Kullanıcı:** Ahmet (ID: 601)
+- **Parametreler:** X = 3 (En Benzer 3 Kullanıcı), K = 3 (Kullanıcı Başına En Yüksek Puanlı 3 Film)
+- **Beklenen En Fazla Öneri Sayısı:** 3 * 3 = 9 Öneri
+- **Çıktı Sonucu:**
+  ```text
+  1. Manhattan Murder Mystery (1993) [Benzer Kullanıcı ID: 103, Benzerlik: 6.49%, Puan: 3/5]
+  2. Naked (1993) [Benzer Kullanıcı ID: 103, Benzerlik: 6.49%, Puan: 3/5]
+  3. Romeo Is Bleeding (1993) [Benzer Kullanıcı ID: 103, Benzerlik: 6.49%, Puan: 3/5]
+  4. Beverly Hills Cop III (1994) [Benzer Kullanıcı ID: 73, Benzerlik: 5.40%, Puan: 4/5]
+  5. Black Beauty (1994) [Benzer Kullanıcı ID: 73, Benzerlik: 5.40%, Puan: 4/5]
+  6. Candyman: Farewell to the Flesh (1995) [Benzer Kullanıcı ID: 73, Benzerlik: 5.40%, Puan: 4/5]
+  7. Heat (1995) [Benzer Kullanıcı ID: 93, Benzerlik: 3.92%, Puan: 4/5]
+  8. Batman (1989) [Benzer Kullanıcı ID: 93, Benzerlik: 3.92%, Puan: 3/5]
+  9. Man of the House (1995) [Benzer Kullanıcı ID: 93, Benzerlik: 3.92%, Puan: 3/5]
+  ```
+
+### 2. Ekran B (Özel Film Puanlama Analizi) Çıktısı
+- **Seçilen Filmler ve Verilen Puanlar:**
+  1. Toy Story (1995) (ID: 1) -> 5/5
+  2. Jumanji (1995) (ID: 2) -> 4/5
+  3. Grumpier Old Men (1995) (ID: 3) -> 3/5
+  4. Waiting to Exhale (1995) (ID: 4) -> 2/5
+  5. Father of the Bride Part II (1995) (ID: 5) -> 1/5
+- **Parametreler:** X = 3, K = 3
+- **Çıktı Sonucu:**
+  ```text
+  1. Toy Story (1995) [Benzer Kullanıcı ID: 157, Benzerlik: 33.54%, Puan: 5/5]
+  2. Air Up There, The (1994) [Benzer Kullanıcı ID: 157, Benzerlik: 33.54%, Puan: 4/5]
+  3. Candyman: Farewell to the Flesh (1995) [Benzer Kullanıcı ID: 157, Benzerlik: 33.54%, Puan: 4/5]
+  4. Waiting to Exhale (1995) [Benzer Kullanıcı ID: 106, Benzerlik: 26.97%, Puan: 4/5]
+  5. Ace Ventura: When Nature Calls (1995) [Benzer Kullanıcı ID: 423, Benzerlik: 22.34%, Puan: 3/5]
+  6. Babysitter, The (1995) [Benzer Kullanıcı ID: 423, Benzerlik: 22.34%, Puan: 3/5]
+  7. Cowboy Way, The (1994) [Benzer Kullanıcı ID: 423, Benzerlik: 22.34%, Puan: 3/5]
+  ```
+  *(Not: Seçilen en benzer 3 kullanıcının toplam puanladığı film sayısı X*K limitinden az olduğu için liste 7 elemanlı kalmıştır. Algoritma X kullanıcı limitini aşmamış ve doğru bir şekilde çalışmıştır.)*
